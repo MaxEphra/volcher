@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hub Vila Olímpia</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1e272e, #485460);
+            color: #ecf0f1;
+            text-align: center;
+            padding: 20px;
+        }
+        h1 { color: #f1c40f; margin-bottom: 15px; }
+        textarea {
+            width: 100%; height: 180px; padding: 10px;
+            font-size: 14px; border: 1px solid #bdc3c7;
+            border-radius: 8px; background: #2f3640; color: white;
+            resize: none;
+        }
+        .buttons, .motoboy-selector { margin: 15px 0; }
+        button {
+            border: none; padding: 12px 20px; cursor: pointer;
+            font-size: 16px; margin: 5px; border-radius: 8px;
+            transition: 0.3s;
+        }
+        .generate-btn { background: #27ae60; color: white; }
+        .generate-btn:hover { background: #219150; }
+        .clear-btn { background: #e74c3c; color: white; }
+        .clear-btn:hover { background: #c0392b; }
+        .whatsapp-btn { background: #25D366; color: white; }
+        .waze-btn { background: #0078FF; color: white; }
+        .result {
+            background: #34495e; padding: 15px; margin: 20px auto;
+            width: 100%; max-width: 700px; border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        .atendimento {
+            margin-bottom: 20px; padding: 15px; border-radius: 5px;
+            background: #2d3e50; border-left: 5px solid #f1c40f;
+            word-wrap: break-word;
+            transition: background 0.3s;
+        }
+        .atendimento.concluido {
+            background: #2ecc71; /* Verde para atendimentos concluídos */
+        }
+        .horario { font-weight: bold; color: #e6ff08; font-size: 20px; }
+
+        /* Estilização dos botões de navegação */
+        nav {
+            margin-bottom: 20px; /* Adiciona espaço abaixo do menu */
+        }
+        nav a {
+            text-decoration: none;
+            color: white;
+            padding: 10px 15px;
+            margin: 0 5px;
+            border-radius: 8px;
+            background: #3498db;
+            transition: 0.3s;
+            display: inline-block;
+        }
+        nav a:hover {
+            background: #2980b9;
+        }
+
+        /* Estilização do botão "Abrir no Waze" */
+        .waze-btn {
+            display: inline-block;
+            padding: 10px 15px;
+            margin-top: 10px;
+            border-radius: 8px;
+            background: #0078FF;
+            color: white;
+            text-decoration: none;
+            transition: 0.3s;
+        }
+        .waze-btn:hover {
+            background: #005bb5;
+        }
+
+        /* Estilização do checkbox */
+        .concluido-checkbox {
+            margin-top: 10px;
+            display: block;
+        }
+        .concluido-checkbox label {
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        /* Botão de retorno à página inicial */
+        .back-btn {
+            display: block;
+            margin: 20px auto;
+            padding: 10px 20px;
+            background: #f1c40f;
+            color: #1e272e;
+            border-radius: 8px;
+            text-decoration: none;
+            transition: 0.3s;
+        }
+        .back-btn:hover {
+            background: #e6b800;
+        }
+    </style>
+</head>
+<body>
+    <h1>Roteiro Vila Olímpia</h1>
+    
+    <nav>
+        <a href="https://resgates.beepsaude.com.br/roteirizacoes/vila-olimpia" target="_blank">Rotas</a>
+        <a href="https://oswaldo.beepsaude.com.br/drivers" target="_blank">Placa</a>
+        <a href="https://app.pipefy.com/public/form/lJ5KfVnq" target="_blank">Entregue</a>
+        <a href="https://maxephra.github.io/hub" target="_blank">Contato</a>
+    </nav>
+    
+    <textarea id="inputData" placeholder="Cole os agendamentos aqui..."></textarea>
+    
+    <div class="motoboy-selector">
+        <h3>Selecione os motoboys:</h3>
+        <label><input type="checkbox" value="Caique"> Caique</label>
+        <label><input type="checkbox" value="Grazy"> Grazy</label>
+        <label><input type="checkbox" value="Jonas"> Jonas</label>
+        <label><input type="checkbox" value="Lucas"> Lucas</label>
+        <label><input type="checkbox" value="Max"> Max</label>
+        <label><input type="checkbox" value="Renato"> Renato</label>
+        <label><input type="checkbox" value="Wellington"> Wellington</label>
+    </div>
+    
+    <div class="buttons">
+        <button class="generate-btn" onclick="gerarRoteiro()">Gerar Roteiro</button>
+        <button class="clear-btn" onclick="limparRoteiro()">Limpar Rotas</button>
+    </div>
+    
+    <div id="output"></div>
+
+    <!-- Botão de retorno à página inicial -->
+    <a href="#" class="back-btn" id="backBtn" style="display: none;">Voltar à Página Inicial</a>
+    
+    <script>
+        function gerarRoteiro() {
+            let inputText = document.getElementById("inputData").value.trim();
+            let selectedMotoboys = Array.from(document.querySelectorAll('.motoboy-selector input:checked')).map(el => el.value);
+            if (!inputText) return alert("Cole os agendamentos antes de gerar o roteiro.");
+            if (selectedMotoboys.length === 0) return alert("Selecione pelo menos um motoboy.");
+            
+            let linhas = inputText.split("\n\n").map(l => l.trim()).filter(l => l !== "");
+            let atendimentos = linhas.map(l => {
+                let horario = l.match(/\d{2}:\d{2}/)[0];
+                let endereco = l.split("\n")[1] || "";
+                return { horario, detalhes: l, endereco };
+            }).sort((a, b) => a.horario.localeCompare(b.horario));
+            
+            let motoboyRoutes = {};
+            let index = 0;
+            for (let atendimento of atendimentos) {
+                let motoboy = selectedMotoboys[index % selectedMotoboys.length];
+                if (!motoboyRoutes[motoboy]) motoboyRoutes[motoboy] = [];
+                motoboyRoutes[motoboy].push(atendimento);
+                index++;
+            }
+            
+            let outputDiv = document.getElementById("output");
+            outputDiv.innerHTML = "";
+            for (let motoboy in motoboyRoutes) {
+                let motoboyHTML = `<div class='result'><h3>${motoboy}</h3>`;
+                let whatsappMessage = `Rotas de ${motoboy}:\n`;
+                
+                motoboyRoutes[motoboy].forEach((rota, i) => {
+                    motoboyHTML += `<div class='atendimento' id='atendimento-${motoboy}-${i}'>
+                        <p><span class='horario'>${rota.horario}</span><br>${rota.detalhes.replace(/\n/g, '<br>')}</p>
+                        <a class='waze-btn' href='https://www.waze.com/ul?q=${encodeURIComponent(rota.endereco)}' target='_blank'>Abrir no Waze</a>
+                        <div class='concluido-checkbox'>
+                            <label>
+                                <input type='checkbox' onchange='marcarConcluido("${motoboy}-${i}")'> Concluído
+                            </label>
+                        </div>
+                    </div>`;
+                    whatsappMessage += `${rota.horario} - ${rota.detalhes}\n`;
+                });
+                
+                motoboyHTML += `<button class='whatsapp-btn' onclick="compartilharWhatsApp('${whatsappMessage.replace(/\n/g, '%0A')}')">Compartilhar no WhatsApp</button>`;
+                motoboyHTML += `</div>`;
+                outputDiv.innerHTML += motoboyHTML;
+            }
+        }
+
+        function marcarConcluido(id) {
+            let atendimento = document.getElementById(`atendimento-${id}`);
+            if (atendimento) {
+                atendimento.classList.toggle('concluido');
+            }
+        }
+
+        function compartilharWhatsApp(mensagem) {
+            let url = `https://api.whatsapp.com/send?text=${mensagem}`;
+            window.open(url, '_blank');
+        }
+        
+        function limparRoteiro() {
+            document.getElementById("inputData").value = "";
+            document.getElementById("output").innerHTML = "";
+        }
+
+        // Mostrar botão de retorno ao acessar links externos
+        document.querySelectorAll('nav a').forEach(link => {
+            link.addEventListener('click', () => {
+                document.getElementById('backBtn').style.display = 'block';
+            });
+        });
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
